@@ -220,4 +220,16 @@ document.addEventListener("DOMContentLoaded", function () {
     generateNewScramble();
     updateSolveHistory();
     updateStatistics();
+    
+    document.getElementById("year").textContent = new Date().getFullYear();
+    
+    document.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+    }, false);
+
+    document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && (e.key === "u" || e.key === "c" || e.key === "x" || e.key === "v" || e.key === "p" || e.key === "s" || e.key === "a")) {
+        e.preventDefault();
+    }
+    }, false);
 });
