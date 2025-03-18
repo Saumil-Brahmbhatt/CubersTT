@@ -444,4 +444,30 @@ body.light-theme #solve-list li {
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1rem;
     }
+    
+    hr {
+    border: none;
+    height: 2px;
+    background-color: #ccc;
+    margin: 20px 0;
+    }
+    
+    /* Disable text selection */
+    body {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    }
+
+    /* Disable right-click (but allow interactions) */
+    body {
+    -webkit-touch-callout: none; /* Disable touch menu on mobile */
+    }
+    
+    footer a {
+    text-decoration: none;  /* Removes underline */
+    color: inherit;  /* Uses the same color as normal text */
+    cursor: pointer;  /* Ensures it still acts like a link */
+    }
 }
