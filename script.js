@@ -13,11 +13,15 @@ document.addEventListener("DOMContentLoaded", function () {
     let solveTimes = JSON.parse(localStorage.getItem("solveTimes")) || [];
     let holdTimeout; // Used for the hold functionality
     let isHolding = false; // Tracks if the user is holding
+    let solveCount = 0; // Initialize solve counter
 
     // Timer Logic
     function startTimer() {
         startTime = Date.now();
         timerRunning = true;
+document.getElementById("scramble").style.display = "none";  // Hide scramble
+document.getElementById("time-display").style.fontSize = "4em"; // Make timer big
+document.getElementById("time-display").style.textAlign = "center";
         elapsedTime = 0;
 
         timerInterval = setInterval(() => {
@@ -28,8 +32,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function stopTimer() {
-        clearInterval(timerInterval);
-        timerRunning = false;
+    clearInterval(timerInterval);
+    timerRunning = false;
+
+    // Show scramble again and reset timer display (without changing alignment)
+    document.getElementById("scramble").style.display = "block";  
+    document.getElementById("time-display").style.fontSize = "2em";  
         const solveTime = (elapsedTime / 1000).toFixed(3);
         timeDisplay.textContent = solveTime; // Final time display
         addSolve(parseFloat(solveTime)); // Save the solve
@@ -88,27 +96,50 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateSolveHistory() {
-        solveList.innerHTML = "";
-        solveTimes.forEach((solve, index) => {
-            const listItem = document.createElement("li");
-            listItem.textContent = `Solve ${index + 1}: ${solve.dnf ? "DNF" : (solve.time + solve.penalty).toFixed(3)}s`;
+    solveList.innerHTML = "";
+    solveTimes.forEach((solve, index) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${solve.dnf ? "DNF" : (solve.time + solve.penalty).toFixed(3)}s`;
 
-            const plusTwoButton = document.createElement("button");
-            plusTwoButton.textContent = "+2";
-            plusTwoButton.onclick = () => markAsPlusTwo(index);
+        // +2 Button
+        const plusTwoButton = document.createElement("button");
+        plusTwoButton.textContent = "+2";
+        plusTwoButton.onclick = () => markAsPlusTwo(index);
 
-            const dnfButton = document.createElement("button");
-            dnfButton.textContent = "DNF";
-            dnfButton.onclick = () => markAsDNF(index);
+        // DNF Button
+        const dnfButton = document.createElement("button");
+        dnfButton.textContent = "DNF";
+        dnfButton.onclick = () => markAsDNF(index);
 
-            const actions = document.createElement("span");
-            actions.appendChild(plusTwoButton);
-            actions.appendChild(dnfButton);
+        // Delete Button (with SVG)
+        const deleteButton = document.createElement("button");
+        deleteButton.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <polyline points="3 6 5 6 21 6"></polyline>
+                                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                                  </svg>`;
+        deleteButton.onclick = () => deleteSolve(index);
 
-            listItem.appendChild(actions);
-            solveList.appendChild(listItem);
-        });
-    }
+        // Append buttons
+        const actions = document.createElement("span");
+        actions.appendChild(plusTwoButton);
+        actions.appendChild(dnfButton);
+        actions.appendChild(deleteButton);
+
+        listItem.appendChild(actions);
+        solveList.appendChild(listItem);
+    });
+}
+
+// Function to delete a single solve
+function deleteSolve(index) {
+    solveTimes.splice(index, 1); 
+    saveData(); 
+    updateSolveHistory(); 
+    updateStatistics();
+}
 
     function markAsPlusTwo(index) {
         solveTimes[index].penalty = 2;
@@ -125,26 +156,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateStatistics() {
-        if (solveTimes.length === 0) {
-            statsDisplay.innerHTML = `
-                <p><strong>Best Time:</strong> N/A</p>
-                <p><strong>Average of 5:</strong> N/A</p>
-                <p><strong>Average of 12:</strong> N/A</p>
-            `;
-            return;
-        }
-
-        const validTimes = solveTimes.filter(solve => !solve.dnf).map(solve => solve.time + solve.penalty);
-        const bestTime = Math.min(...validTimes).toFixed(3);
-        const avg5 = calculateAverage(solveTimes.slice(-5));
-        const avg12 = calculateAverage(solveTimes.slice(-12));
-
+    if (solveTimes.length === 0) {
         statsDisplay.innerHTML = `
-            <p><strong>Best Time:</strong> ${bestTime}s</p>
-            <p><strong>Average of 5:</strong> ${solveTimes.length >= 5 ? avg5 : "N/A"}</p>
-            <p><strong>Average of 12:</strong> ${solveTimes.length >= 12 ? avg12 : "N/A"}</p>
+            <p><strong>Number of Solves:</strong> 0</p>
+            <p><strong>Best Time:</strong> N/A</p>
+            <p><strong>Average of 5:</strong> N/A</p>
+            <p><strong>Average of 12:</strong> N/A</p>
         `;
+        return;
     }
+
+    const validTimes = solveTimes.filter(solve => !solve.dnf).map(solve => solve.time + solve.penalty);
+    const bestTime = Math.min(...validTimes).toFixed(3);
+    const avg5 = calculateAverage(solveTimes.slice(-5));
+    const avg12 = calculateAverage(solveTimes.slice(-12));
+    const solveCount = solveTimes.length; // Count total solves
+
+    statsDisplay.innerHTML = `
+        <p><strong>Number of Solves:</strong> ${solveCount}</p>
+        <p><strong>Best Time:</strong> ${bestTime}s</p>
+        <p><strong>Average of 5:</strong> ${solveTimes.length >= 5 ? avg5 : "N/A"}</p>
+        <p><strong>Average of 12:</strong> ${solveTimes.length >= 12 ? avg12 : "N/A"}</p>
+    `;
+}
 
     function calculateAverage(times) {
         const validTimes = times.filter(solve => !solve.dnf).map(solve => solve.time + solve.penalty);
@@ -232,4 +266,6 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
     }
     }, false);
+    
+    
 });
